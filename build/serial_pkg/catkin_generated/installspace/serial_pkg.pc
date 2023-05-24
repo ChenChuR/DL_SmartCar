@@ -1,0 +1,8 @@
+prefix=/home/win/catkin_ws/install
+
+Name: serial_pkg
+Description: Description of serial_pkg
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: cv_bridge image_transport roscpp rospy sensor_msgs std_msgs message_runtime

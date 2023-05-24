@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -shared -Wl,-soname,libred.so -o /home/win/catkin_ws/devel/lib/libred.so CMakeFiles/red.dir/src/red.cpp.o 

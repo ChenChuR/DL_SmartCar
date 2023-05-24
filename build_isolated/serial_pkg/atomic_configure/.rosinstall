@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/win/catkin_ws/devel_isolated/serial_pkg/setup.sh

@@ -1,0 +1,8 @@
+<launch>
+        <!-- node -->
+        <!-- node pkg="serial_pkg" type="detect.py" name="yolo_detect" / -->
+        <node pkg="serial_pkg" type="road_image" name="road_msg" />
+        <node pkg="serial_pkg" type="speed_msg_send" name="speed_send_msg" />
+        <node pkg="serial_pkg" type="red" name="red_light_line" />
+
+</launch>
