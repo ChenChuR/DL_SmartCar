@@ -1,8 +1,7 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/pid_new.dir/src/pid_new.cpp.o"
   "/home/win/catkin_ws/devel/lib/libpid_new.pdb"
   "/home/win/catkin_ws/devel/lib/libpid_new.so"
-  "CMakeFiles/pid_new.dir/src/pid_new.cpp.o"
-  "CMakeFiles/pid_new.dir/src/pid_new.cpp.o.d"
 )
 
 # Per-language clean rules from dependency scanning.

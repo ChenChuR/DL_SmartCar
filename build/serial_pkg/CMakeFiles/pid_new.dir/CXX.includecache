@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/win/catkin_ws/src/serial_pkg/include/serial_pkg/pid_new.h
+stdio.h
+/home/win/catkin_ws/src/serial_pkg/include/serial_pkg/stdio.h
+
+/home/win/catkin_ws/src/serial_pkg/src/pid_new.cpp
+serial_pkg/pid_new.h
+/home/win/catkin_ws/src/serial_pkg/src/serial_pkg/pid_new.h
+
