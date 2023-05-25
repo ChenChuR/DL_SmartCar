@@ -47,7 +47,7 @@ namespace red_ns
     {
         // double start =ros::Time::now().toSec();
         cv::Mat cropped_frame;
-        cropped_frame = frame(cv::Range(0,400), cv::Range(760,1360));   // [710,1210]
+        cropped_frame = frame(cv::Range(50,450), cv::Range(760,1360));   // [710,1210]
         // cout << "Width : " << cropped_frame.size().width << endl;
 	    // cout << "Height: " << cropped_frame.size().height << endl;
 	    // cout<<"Channels: :"<< cropped_frame.channels() << endl;
@@ -112,7 +112,8 @@ namespace red_ns
         for (; it_Cr != it_Cr_end; ++it_Cr, ++it_Red, ++it_Green)
         {
             // RED, 145<Cr<470 红色
-            if (*it_Cr > 140 && *it_Cr < 475)
+            // 140, 475
+            if (*it_Cr > 135 && *it_Cr < 480)
                 *it_Red = 255;
             else
                 *it_Red = 0;

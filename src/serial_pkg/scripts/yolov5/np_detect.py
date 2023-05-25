@@ -198,7 +198,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d , height = %d \n", width, height)
-                if(height > 75):
+                if(height > 60):
                     print("width = %d , height = %d \n", width, height)
                     print("result : side_walk")
                     #result.signage = 0b10000001
@@ -211,7 +211,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d , height = %d \n", width, height)
-                if(height > 100):
+                if(height > 125):
                     print("width = %d , height = %d", width, height)
                     print("result : ramp")
                     #result.signage = 0b10000010
@@ -224,7 +224,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d, height = %d", width, height)
-                if(height > 130):
+                if(height > 140):   #130
                     print("width = %d, height = %d", width, height)
                     print("result : rate-limiting-on")
                     #result.signage = 0b10000100
@@ -489,8 +489,8 @@ def yolo(img):
             #ret,frame = cap.read()
         image, t=thread1.infer(img)
         print(t)
-        cv2.imshow("result", image)
-        cv2.waitKey(1)
+        # cv2.imshow("result", image)
+        # cv2.waitKey(1)
         #if cv2.waitKey(1) & 0XFF == ord('q'):  # 1 millisecond
             #break
  
