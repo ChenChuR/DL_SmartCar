@@ -154,30 +154,30 @@ namespace red_ns
         if (redCount == 0 && greenCount == 0)
         {
             cv::putText(frame, "lights out", cv::Point(40, 150), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(255, 255, 255), 8, 8, 0);
-            imshow("video", frame);
-            cv::waitKey(2);
+            // imshow("video", frame);
+            // cv::waitKey(2);
             return 0;
         }
         else if (redCount > greenCount)
         {
             cv::putText(frame, "red light", cv::Point(40, 150), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 0, 255), 8, 8, 0);
-            imshow("video", frame);
-            cv::waitKey(2);
+            // imshow("video", frame);
+            // cv::waitKey(2);
             cv::Mat three_imgRed;
     	    cv::cvtColor(imgRed, three_imgRed, cv::COLOR_GRAY2BGR);
-		    cv::imshow("Red", three_imgRed);
-            cv::waitKey(2);
+		    // cv::imshow("Red", three_imgRed);
+            // cv::waitKey(2);
             return 2;
         }
         else
         {
             cv::putText(frame, "green light", cv::Point(40, 150), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 0), 8, 8, 0);
-            imshow("video", frame);
-            cv::waitKey(2);
+            // imshow("video", frame);
+            // cv::waitKey(2);
             cv::Mat three_imgGreen;
     	    cv::cvtColor(imgGreen, three_imgGreen, cv::COLOR_GRAY2BGR);
-		    cv::imshow("Green", three_imgGreen);
-            cv::waitKey(2);
+		    // cv::imshow("Green", three_imgGreen);
+            // cv::waitKey(2);
             return 3;
         }
     }

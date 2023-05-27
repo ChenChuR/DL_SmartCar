@@ -37,7 +37,7 @@ namespace road_ns
                         cv::Point FitPoint(cv::Mat Coe,int n,int x);
                         void FitPolynomialCurve(const std::vector<cv::Point>& points, int n, cv::Mat& Coe) ;
                         void image_process(cv::Mat& input_img);
-                        void choose_lines(std::vector<cv::Vec4i> lines, std::vector<cv::Vec4i>& left_lines, std::vector<cv::Vec4i>& right_lines);
+                        void choose_lines(std::vector<cv::Vec4i> lines, std::vector<cv::Vec4i>& left_lines, std::vector<cv::Vec4i>& right_lines, float k_min);
                         void select_lines(int h, std::vector<cv::Vec4i>& lines);
         };
 }

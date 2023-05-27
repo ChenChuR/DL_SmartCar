@@ -19,10 +19,10 @@
 #define TURN_PWM_RIGHT 2000
 
 static PidTypeDef angle_pid;
-const float angle_PID[3] = {1.18,0,0.45};
+const float angle_PID[3] = {1.5,0,1.0};  //1.18 0 0.45
 float angle_max_out = 100;
 float angle_max_iout = 30;
-// 2023.05.25 19：20 霍夫变换(没有补线) 37s 无罚时跑完
+
 namespace road_ns
 {
 	void road_image::road_init(void)
@@ -110,24 +110,27 @@ namespace road_ns
 
 	void road_image::image_process(cv::Mat& input_img)
 	{
-		cv::Rect rect(0, 240, 600, 120);
+		int col = 600;  //600
+		int row = 360;  //360
+		int row_p = 240; //240
+		cv::Rect rect(0, row_p, col, row - row_p);
 		//0 240 600 120
-		cv::resize(input_img, input_img, cv::Size(600, 360),(0,0) ,(0,0),cv::INTER_AREA);
+		cv::resize(input_img, input_img, cv::Size(col, row),(0,0) ,(0,0),cv::INTER_AREA);
+		//600 360
 		cv::GaussianBlur(input_img, input_img, cv::Size(3, 3), 0);
 		cv::cvtColor(input_img, input_img, CV_BGR2HSV);
 		cv::inRange(input_img, cv::Scalar(26, 43, 83), cv::Scalar(90, 255, 255), input_img);
 		input_img(rect).copyTo(input_img);
 		cv::resize(input_img, input_img, cv::Size(300, 60), (0, 0), (0, 0), cv::INTER_LINEAR);
-		dilate(input_img, input_img, cv::Mat(3, 3, CV_8UC1), cv::Point(-1, -1));
-        erode(input_img, input_img, cv::Mat(3, 3, CV_8UC1), cv::Point(-1, -1));
-		// cv:: Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7));
+		cv::dilate(input_img, input_img, cv::Mat(3, 3, CV_8UC1), cv::Point(-1, -1));
+        cv::erode(input_img, input_img, cv::Mat(3, 3, CV_8UC1), cv::Point(-1, -1));
+		// cv:: Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
 		// cv::morphologyEx(input_img, input_img, cv::MORPH_CLOSE, kernel);
 		// cv::morphologyEx(input_img, input_img, cv::MORPH_OPEN, kernel);
 	}
 
-	void road_image::choose_lines(std::vector<cv::Vec4i> lines, std::vector<cv::Vec4i>& left_lines, std::vector<cv::Vec4i>& right_lines)
+	void road_image::choose_lines(std::vector<cv::Vec4i> lines, std::vector<cv::Vec4i>& left_lines, std::vector<cv::Vec4i>& right_lines,float k_min = 0.4)
 	{	
-		float k_min = 0.4;
 		float k_max = 5;
 		float k;
 
@@ -137,7 +140,6 @@ namespace road_ns
 		{
 			line = lines[i];	
 			k = (line[1] - line[3]) * 1.0 / (line[0] - line[2]);
-			//std::cout << "k:" << k << std::endl;
 			if (abs(k) < k_max && abs(k) > k_min)
 			{
 				if (k < 0)
@@ -160,6 +162,7 @@ namespace road_ns
 					else
 					{
 						right_lines.push_back(line);
+						//std::cout << "k:" << k << std::endl;
 					}
 				}
 			}
@@ -223,6 +226,7 @@ namespace road_ns
 
 	void road_image::Calc_Speed(cv::Mat *frame,bool show_image)
 	{
+		vx = 1.2;
 		double begin =ros::Time::now().toSec();
 		cv::Mat LeftCoe,RightCoe;	
 		cv::Mat way(60, 300, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -232,28 +236,43 @@ namespace road_ns
 		cv::Vec4i line;
 
 		cv::Point l1, l2, r1, r2;
-		int TurnSign;
 		double offset = 0;
 		int order = 1;
-		int height = 80;
 
 		image_process(*frame);
+
+		double img_end =ros::Time::now().toSec();
+		std::cout << "-----image_process Time :" << (img_end - begin) * 1000 << "ms" << std::endl;
 		
 		int h = (*frame).rows;
+		int w = (*frame).cols;
 		
-		cv::HoughLinesP(*frame,lines,1,CV_PI/180,15,37,60); //45
+		cv::HoughLinesP(*frame,lines,1,CV_PI/180,15,37,h); //15 45 60
+
+		double hough_end =ros::Time::now().toSec();
+		std::cout << "-----Hough Time :" << (hough_end - begin) * 1000 << "ms" << std::endl;
 		
 		if (lines.size())
 		{
-			choose_lines(lines, left_lines, right_lines);  //分类
+			if(road_state != Light)
+				choose_lines(lines, left_lines, right_lines);  //分类
+			else
+				choose_lines(lines, left_lines, right_lines, 0.5);
 			/*std::cout << left_lines.size() << std::endl;
 			std::cout << right_lines.size() << std::endl;*/
+
+			if(road_state == Left_Turn && left_lines.size() == 0 && right_lines.size() == 0)
+			{
+				turn_pwm = TURN_PWM_LEFT;
+				std::cout << "______________T TURN LEFT____________" << std::endl;
+				return;
+			}
 			
 			if (left_lines.size() > 0)
 			{
 				select_lines(h, left_lines);  //筛�?
 		
-				//cv::circle(way, cv::Point((int)(line[0] - line[2]) * 1.0 / (line[1] - line[3]) * (h - line[1]) + line[0], height - 1), 3, cv::Scalar(255, 255, 255), -1);	
+				//cv::circle(way, cv::Point((int)(line[0] - line[2]) * 1.0 / (line[1] - line[3]) * (h - line[1]) + line[0], h - 1), 3, cv::Scalar(255, 255, 255), -1);	
 				for (size_t i = 0; i < left_lines.size(); i++)
 				{
 					line = left_lines[i];
@@ -263,14 +282,14 @@ namespace road_ns
 				}
 				FitPolynomialCurve(left_points, order, LeftCoe);
 				l1 = FitPoint(LeftCoe, order, 0);
-				l2 = FitPoint(LeftCoe, order, height - 1);
+				l2 = FitPoint(LeftCoe, order,79);
 			}
 
 			if (right_lines.size() > 0)
 			{
 				select_lines(h, right_lines);
 				
-				//cv::circle(way, cv::Point((int)(line[0] - line[2]) * 1.0 / (line[1] - line[3]) * (h - line[1]) + line[0], height - 1), 3, cv::Scalar(255, 255, 255), -1);
+				//cv::circle(way, cv::Point((int)(line[0] - line[2]) * 1.0 / (line[1] - line[3]) * (h - line[1]) + line[0], h - 1), 3, cv::Scalar(255, 255, 255), -1);
 				for (size_t i = 0; i < right_lines.size(); i++)
 				{
 					line = right_lines[i];
@@ -280,53 +299,56 @@ namespace road_ns
 				}
 				FitPolynomialCurve(right_points, order, RightCoe);
 				r1 = FitPoint(RightCoe, order, 0);
-				r2 = FitPoint(RightCoe, order, height - 1);
+				r2 = FitPoint(RightCoe, order, 79);
 			}
 			cv::line(way, l1, l2, cv::Scalar(0, 255, 255), 3, cv::LINE_AA);
 			cv::line(way, r1, r2, cv::Scalar(255, 0, 255), 3, cv::LINE_AA);
-			//1顶部�?????????????2底部
+			//1顶部�?????????????????2底部
 		}
+
+		double line_end =ros::Time::now().toSec();
+		std::cout << "-----line_handle Time :" << (line_end - begin) * 1000 << "ms" << std::endl;
 
 		double leftk = 0;
 		double rightk = 0;
 
-		offset = ((l1.x + r1.x)/2 + (l2.x + r2.x)/2)/2 - 150;
-		std::cout << "len1:" << r1.x - l1.x << std::endl;
-		std::cout << "len2:" << r2.x - l2.x << std::endl; 
+		offset = ((l1.x + r1.x)/2 + (l2.x + r2.x)/2)/2 - w/2;
+
+		//std::cout << "len1:" << r1.x - l1.x << std::endl;
+		//std::cout << "len2:" << r2.x - l2.x << std::endl; 
+
 		if(offset > 90) offset = 90;
 		else if(offset < -90) offset = -90;
+		
+		// switch(road_state)
+		// {
+		// 	case SideWalk:
+		// 		vx = 1.2;
+		// 		break;
+		// 	case Ramp:
+		// 		vx = 0.8;
+		// 		break;
+		// 	default:
+		// 		break;
+		// }
 
-		std::cout << "offset:" << offset<<std::endl;
-
-		switch(road_state)
-		{
-			case SideWalk:
-				vx = 1.1;
-				break;
-			case Ramp:
-				vx = 0.8;
-				break;
-			default:
-				break;
-		}
-
-		if (left_points.size() > 0)
-		{
-			leftk = (l1.y - l2.y) * 1.0 / (l1.x - l2.x);
-		}
-		if (right_points.size()>0)
-		{
-			rightk = (r1.y - r2.y) * 1.0 / (r1.x - r2.x);
-		}
-
+		// if (left_points.size() > 0)
+		// {
+		// 	leftk = (l1.y - l2.y) * 1.0 / (l1.x - l2.x);
+		// }
+		// if (right_points.size()>0)
+		// {
+		// 	rightk = (r1.y - r2.y) * 1.0 / (r1.x - r2.x);
+		// }
 		//std::cout << "leftk:" <<leftk << std::endl;
 		//std::cout << "rightk:" <<rightk << std::endl;
+
 		int narrow_d = 105;
 		int wide_d = 240;
 
 		if (left_points.size() == 0 && right_points.size() > 0)
 		{
-			if(1)
+			if(road_state != Limit_Rate_On)
 			{
 				turn_pwm = TURN_PWM_LEFT;
 				std::cout << "_______________left_____________" << std::endl;
@@ -336,7 +358,10 @@ namespace road_ns
 				Show_Image("way", way, show_image);
 				return;
 			}
-			offset = 0;
+			else
+			{
+				offset = ((r1.x * 2 - narrow_d)/2 + (r2.x * 2 - wide_d)/2)/2 - w/2;
+			}
 
 		}
 		else if(left_points.size() > 0 && right_points.size() == 0)
@@ -351,7 +376,13 @@ namespace road_ns
 				Show_Image("way", way, show_image);
 				return;
 			}
+			else
+			{
+				offset = ((l1.x * 2 + narrow_d)/2 + (l2.x * 2 + wide_d)/2)/2 - w/2;
+			}
 		}
+
+		std::cout << "offset:" << offset<<std::endl;
 
 		uint16_t wz_pwm = PID_Calc(&angle_pid,offset,0);
 		ROS_INFO("%f %f",TURN_PWM_0-angle_pid.out,offset);	
@@ -359,13 +390,12 @@ namespace road_ns
 
 		// cv::imshow("frame", *frame);
 		cv::Mat three_mask;
-    	cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
+    		cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
 		Show_Image("mask", three_mask, show_image);
 		Show_Image("way", way, show_image);
 
-
 		double end =ros::Time::now().toSec();
-		std::cout << "Time :" << (end - begin) * 1000 << "ms" << std::endl;
+		std::cout << "-----all Time :" << (end - begin) * 1000 << "ms" << std::endl;
 
 		return;
 	

@@ -198,7 +198,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d , height = %d \n", width, height)
-                if(height > 60):
+                if(height > 80):
                     print("width = %d , height = %d \n", width, height)
                     print("result : side_walk")
                     #result.signage = 0b10000001
@@ -211,7 +211,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d , height = %d \n", width, height)
-                if(height > 125):
+                if(height > 95):   #115  125
                     print("width = %d , height = %d", width, height)
                     print("result : ramp")
                     #result.signage = 0b10000010
@@ -224,7 +224,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d, height = %d", width, height)
-                if(height > 140):   #130
+                if(height > 105):   #115 130
                     print("width = %d, height = %d", width, height)
                     print("result : rate-limiting-on")
                     #result.signage = 0b10000100
@@ -248,7 +248,7 @@ class YoLov5TRT(object):
             elif(temp == "left-turn"):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
-                if(height < 95 and height > 65 and width > 65):
+                if(height < 95 and height > 22 and width > 55):    # 95 22 55  ; 95 45 65
                     print("width = %d, hwight = %d 000 \n", width, height)
                     print("result : left-turn")
                     #result.signage = 0b10010000
