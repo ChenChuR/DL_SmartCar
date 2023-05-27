@@ -98,12 +98,38 @@ namespace road_ns
 		
 	}
 
-	void road_image::T_Turn(std::vector<cv::Point> left,std::vector<cv::Point> right,int height)
+	int road_image::T_Turn(int row, int col, cv::Mat mask)
 	{
-		if(right.size() < height - 50 && left.size() < height - 50)
+		std::vector<cv::Point> left,right;
+		int Cmid = 150;
+		int i,j1,j2;
+		for (i = row-1; i >= 0; i--) //从下到上
+		{	
+			for (j1 = Cmid; j1 > 0; j1--) //从中间向�??????????
+			{
+				if (mask.at<uchar>(i, j1) == 0 && mask.at<uchar>(i, j1 - 1) == 255)
+				{
+					left.push_back(cv::Point(i,j1 - 1));
+					break;
+				}
+			}
+			for (j2 = Cmid; j2 < col - 1; j2++) //从中间向�??????????
+			{
+				if (mask.at<uchar>(i, j2) == 0 && mask.at<uchar>(i, j2 + 1) == 255)
+				{
+					right.push_back(cv::Point(i,j2 + 1));
+					break;
+				}
+			}
+		}
+		if(right.size() < row - 30 && left.size() < row - 30)
 		{
 			std::cout <<"T left"<< std::endl;
-			turn_pwm = TURN_PWM_LEFT;			
+			return TURN_PWM_LEFT;			
+		}
+		else
+		{
+			return 0;
 		}
 
 	}
@@ -246,6 +272,14 @@ namespace road_ns
 		
 		int h = (*frame).rows;
 		int w = (*frame).cols;
+
+		if(road_state == Left_Turn)
+		{
+			if(turn_pwm = T_Turn(h, w, *frame))
+			{
+				return;
+			}
+		}
 		
 		cv::HoughLinesP(*frame,lines,1,CV_PI/180,15,37,h); //15 45 60
 
@@ -319,18 +353,6 @@ namespace road_ns
 
 		if(offset > 90) offset = 90;
 		else if(offset < -90) offset = -90;
-		
-		// switch(road_state)
-		// {
-		// 	case SideWalk:
-		// 		vx = 1.2;
-		// 		break;
-		// 	case Ramp:
-		// 		vx = 0.8;
-		// 		break;
-		// 	default:
-		// 		break;
-		// }
 
 		// if (left_points.size() > 0)
 		// {
@@ -390,7 +412,7 @@ namespace road_ns
 
 		// cv::imshow("frame", *frame);
 		cv::Mat three_mask;
-    		cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
+    	cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
 		Show_Image("mask", three_mask, show_image);
 		Show_Image("way", way, show_image);
 

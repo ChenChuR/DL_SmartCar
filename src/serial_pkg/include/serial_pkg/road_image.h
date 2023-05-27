@@ -33,7 +33,7 @@ namespace road_ns
                         void Show_Image(std::string name,cv::Mat frame,bool show_image);
                         void Light_Calc(double leftk);
                         void Default_Calc(double k);
-                        void T_Turn(std::vector<cv::Point> left,std::vector<cv::Point> right,int height);
+                        int T_Turn(int height, int col, cv::Mat mask);
                         cv::Point FitPoint(cv::Mat Coe,int n,int x);
                         void FitPolynomialCurve(const std::vector<cv::Point>& points, int n, cv::Mat& Coe) ;
                         void image_process(cv::Mat& input_img);

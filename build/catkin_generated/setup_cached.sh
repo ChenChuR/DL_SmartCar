@@ -7,5 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export PATH='/opt/ros/melodic/bin:/usr/src/tensorrt/bin:/home/win/cmake-3.13.0/bin/:/usr/local/cuda-10.2/bin:/home/win/.vscode-server/bin/b3e4e68a0bc097f0ae7907b217c1119af9e03435/bin/remote-cli:/home/win/.local/bin:/usr/src/tensorrt/bin:/home/win/cmake-3.13.0/bin/:/usr/local/cuda-10.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'
+export PATH='/opt/ros/melodic/bin:/usr/src/tensorrt/bin:/home/win/cmake-3.13.0/bin/:/usr/local/cuda-10.2/bin:/home/win/.vscode-server/bin/b7886d7461186a5eac768481578c1d7ca80e2d21/bin/remote-cli:/home/win/.local/bin:/usr/src/tensorrt/bin:/home/win/cmake-3.13.0/bin/:/usr/local/cuda-10.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'
 export PWD='/home/win/catkin_ws/build'

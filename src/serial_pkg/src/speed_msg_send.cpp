@@ -12,7 +12,7 @@
 #define Start_Byte 0xA5
 #define End_Byte 0x5A
 
-// 2023.05.27 20:06  调试 30s 跑完全场。 主要部分霍夫变换+判断一边线
+// 2023.05.27 21:37  调试 29s 跑完全场。 主要部分霍夫变换+判断一边线+中线两边扫
 
 serial::Serial ser;
 //�������ݻ�����
@@ -61,6 +61,7 @@ void Serial_Send(float vx,uint16_t turn_pwm)
 {
 	speed_structure.vx.float_data = vx;
 	speed_structure.turn_pwm = turn_pwm;
+	// speed_structure.turn_pwm = 700;
 
     unsigned char sum = 0x00;
         
@@ -165,12 +166,14 @@ void signage_check(float vx,uint16_t turn_pwm)
     {
         case road_image.SideWalk:
             vx = 1.25;   //1.2
-            turn(&turn_pwm,560,700); //555 565 //560
-            if(turn_pwm == 560)
+            turn(&turn_pwm,570,700); // 565 555 565 //560
+            if(turn_pwm == 570)
                 vx = 1.1;
+            // else
+            //     turn_pwm = 700;
             // if(turn_pwm >= 740)
             //     turn_pwm = 740;
-            if(turn_pwm == 560)
+            if(turn_pwm == 570)
                 sidewalk_++;
             if(sidewalk && sidewalk_ >= 5)
             {
@@ -213,13 +216,13 @@ void signage_check(float vx,uint16_t turn_pwm)
             break;
         case road_image.S_Turn:
             vx = 1.0;          // 1.0 0.95 0.9
-            turn(&turn_pwm,563,800); //565 580
+            turn(&turn_pwm,565,800); //563 565 580
             static bool left_state = false; 
-            if(turn_pwm == 563 && left_state == false)
+            if(turn_pwm == 565 && left_state == false)
             {
                 left_state = true;
             }
-            if(turn_pwm != 563 && left_state == true)
+            if(turn_pwm != 565 && left_state == true)
             {
                 vx = 0.55; // 0.6 0.51 0.55
                 if(turn_pwm == 800)
@@ -230,7 +233,7 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.Light:
-            vx = 0.95;      // 0.85 0.82 0.9 0.82
+            vx = 1.0;      // 0.95 0.85 0.82 0.9 0.82
             if(turn_pwm < 660)
                 turn_pwm = 660;
             if(turn_pwm > 740 && turn_pwm < 831)   // 831
@@ -253,9 +256,11 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.Left_Turn:
-            vx = 1.1;   // 1.0 1.2 0.7
+            vx = 1.2;   // 1.0 1.2 0.7
             static double start3 = ros::Time::now().toSec();
 			turn(&turn_pwm,540,720);
+            if(turn_pwm == 540)
+                vx = 1.0;
             if(ros::Time::now().toSec() - start3 > 3.0)
                 road_image.road_state = road_image.Stop;
             break;
