@@ -224,7 +224,7 @@ class YoLov5TRT(object):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 #print("width = %d, height = %d", width, height)
-                if(height > 105):   #115 130
+                if(height > 105):   #98 115 130
                     print("width = %d, height = %d", width, height)
                     print("result : rate-limiting-on")
                     #result.signage = 0b10000100
@@ -236,7 +236,7 @@ class YoLov5TRT(object):
             elif(temp == "rate-limiting-off"):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
-                if(height > 240):
+                if(height > 100):  #240
                     print("width = %d , height = %d \n", width, height)
                     print("result : rate-limiting-off")
                     #result.signage = 0b10001000
@@ -248,7 +248,7 @@ class YoLov5TRT(object):
             elif(temp == "left-turn"):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
-                if(height < 95 and height > 20 and width > 50):    # 95 22 55  ; 95 45 65
+                if(height < 95 and height > 20 and width > 42):    # 95 22 55  ; 95 45 65
                     print("width = %d, hwight = %d 000 \n", width, height)
                     print("result : left-turn")
                     #result.signage = 0b10010000
@@ -489,8 +489,10 @@ def yolo(img):
             #ret,frame = cap.read()
         image, t=thread1.infer(img)
         print(t)
-        # cv2.imshow("result", image)
-        # cv2.waitKey(1)
+        x, y = image.shape[0:2]
+        img_test1 = cv2.resize(image, (int(y / 4), int(x / 4)))
+        cv2.imshow("result", img_test1)
+        cv2.waitKey(1)
         #if cv2.waitKey(1) & 0XFF == ord('q'):  # 1 millisecond
             #break
  
