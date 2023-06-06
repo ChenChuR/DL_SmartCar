@@ -74,5 +74,6 @@
                 "typeindex": "cpp",
                 "typeinfo": "cpp"
         },
-        "ros.distro": "melodic"
+        "ros.distro": "melodic",
+        "cmake.sourceDirectory": "/home/win/catkin_ws/src/serial_pkg/scripts/yolov5"
 }

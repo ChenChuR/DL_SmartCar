@@ -41,6 +41,7 @@ static bool left_turn_flag = false;
 static bool show_image = true;
 static bool limit_time_flag = true;
 static bool light_time_flag = true;
+static bool right_time_flag = true;
 static bool stop_time_flag = true;
 static bool left_state_flag = false; 
 
@@ -164,6 +165,8 @@ void turn(uint16_t *pwm,uint16_t left,uint16_t right)
 
 void switch_state(int param)
 {
+    if(param != 5)
+        right_time_flag = true;
     switch(param)
     {
         case 0:
@@ -207,20 +210,21 @@ void signage_check(float vx,uint16_t turn_pwm)
     switch_state(local_state);
     static double limit_time = ros::Time::now().toSec();
     static double light_time = ros::Time::now().toSec();
+    static double right_time = ros::Time::now().toSec();
     static double stop_time = ros::Time::now().toSec();
 
     switch(road_image.road_state)
     {
         case road_image.SideWalk:
-            vx = 1.25;   //1.2
-            turn(&turn_pwm,570,700); // 565 555 565 //560
-            if(turn_pwm == 570)
-                vx = 1.1;
+            vx = 1.5;   //1.25 1.2
+            turn(&turn_pwm,575,700); // 565 555 565 //560
+            if(turn_pwm == 575)
+                vx = 1.2;  // 1.1
             // else
             //     turn_pwm = 700;
             // if(turn_pwm >= 740)
             //     turn_pwm = 740;
-            if(turn_pwm == 570)
+            if(turn_pwm == 575)
                 sidewalk_++;
             if(sidewalk && sidewalk_ >= 5)
             {
@@ -232,6 +236,7 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.Ramp:
+            sidewalk_ = 0;
 			turn(&turn_pwm,555,710);
             vx = 1.15;    //1.1 1.05 1.0 0.95 0.9 0.85  0.8
             if(ramp)
@@ -271,15 +276,15 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.S_Turn:
-            vx = 1.0;          // 1.0 0.95 0.9
-            turn(&turn_pwm,565,800); //563 565 580
+            vx = 1.0;          //1.1  1.0 0.95 0.9
+            turn(&turn_pwm,565,800); //565 563 565 580
             if(turn_pwm == 565 && left_state_flag == false)
             {
                 left_state_flag = true;
             }
             if(turn_pwm != 565 && left_state_flag == true)
             {
-                vx = 0.55; // 0.6 0.51 0.55
+                vx = 0.1; // 0.55 0.6 0.51 0.55
                 if(turn_pwm == 800)
                 {
                     road_image.road_state = road_image.Light;
@@ -290,15 +295,31 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.Light:
+            if(right_time_flag)
+            {
+                right_time = ros::Time::now().toSec();
+                right_time_flag = false;
+            }
             vx = 1.0;      // 0.95 0.85 0.82 0.9 0.82
-            turn(&turn_pwm,700,835); // old_right : 827 831 831 825
+            turn(&turn_pwm,700,838); // old_right : 827 831 831 825
             if(turn_pwm < 660)
                 turn_pwm = 660;
-            if(turn_pwm > 740 && turn_pwm < 835)   // 831
+            if(turn_pwm > 740 && turn_pwm < 838)   // 831
                 turn_pwm = 740;
+            if(turn_pwm == 838)
+            {
+                float temp_time = ros::Time::now().toSec() - right_time;
+                // ROS_ERROR("%.2f",temp_time);
+                if(temp_time < 3.0)
+                    vx = 0.9;
+                else if(temp_time < 5.0)
+                    vx = 1.5;
+                else
+                    vx = 0.6;
+            }
             if(left_turn)
             {
-				Serial_Send(0.0,turn_pwm);
+				Serial_Send(0.0,700); //turn_pwm
                 // ros::Duration(3).sleep();
 				bool light_detect = false;
                 if(light_time_flag)
@@ -310,7 +331,7 @@ void signage_check(float vx,uint16_t turn_pwm)
 				{
 					cap.read(frame);
 					light_detect = red.Red_Judge(frame);
-                    if(ros::Time::now().toSec() - light_time > 1.0)
+                    if(ros::Time::now().toSec() - light_time > 10.0)
                         break;
 				}
                 road_image.road_state = road_image.Left_Turn;
@@ -319,21 +340,21 @@ void signage_check(float vx,uint16_t turn_pwm)
             }
             break;
         case road_image.Left_Turn:
-            vx = 1.0;   // 1.0 1.2 0.7
-            if(stop_time_flag)
-            {
-                stop_time = ros::Time::now().toSec();
-                stop_time_flag = false;
-            }
+            vx = 1.0;   // 1.2
+            // if(stop_time_flag)
+            // {
+            //     stop_time = ros::Time::now().toSec();
+            //     stop_time_flag = false;
+            // }
 			turn(&turn_pwm,540,720);
             if(turn_pwm == 540)
-                vx = 1.0;
-            if(ros::Time::now().toSec() - stop_time > 3.0)
-            {
-                road_image.road_state = road_image.Stop;
-                ros::param::set("road_state",road_image.road_state);
-                stop_time_flag = true;
-            }
+                vx = 0.85;  //0.8 0.75
+            // if(ros::Time::now().toSec() - stop_time > 4.0)
+            // {
+            //     road_image.road_state = road_image.Stop;
+            //     ros::param::set("road_state",road_image.road_state);
+            //     stop_time_flag = true;
+            // }
             break;
         case road_image.Stop:
             vx = 0.0;

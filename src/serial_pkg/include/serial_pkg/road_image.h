@@ -4,6 +4,8 @@
 #include "stdio.h"
 #include "serial_pkg/pid_new.h"
 
+#define buff_len 7
+
 namespace road_ns
 {
         class road_image
@@ -30,10 +32,14 @@ namespace road_ns
                         void Calc_Speed(cv::Mat *frame,bool show_image);
 
                 private:
+		        float buff[buff_len];
+
+                        void Average_PWM_Init(void);
+                        float Average_PWM(float current_pwm);
                         void Show_Image(std::string name,cv::Mat frame,bool show_image);
                         void Light_Calc(double leftk);
                         void Default_Calc(double k);
-                        int T_Turn(int height, int col, cv::Mat mask);
+                        int T_Turn(int height, int col, cv::Mat& mask);
                         cv::Point FitPoint(cv::Mat Coe,int n,int x);
                         void FitPolynomialCurve(const std::vector<cv::Point>& points, int n, cv::Mat& Coe) ;
                         void image_process(cv::Mat& input_img);

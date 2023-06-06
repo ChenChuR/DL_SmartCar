@@ -19,7 +19,8 @@
 #define TURN_PWM_RIGHT 2000
 
 static PidTypeDef angle_pid;
-const float angle_PID[3] = {1.5,0,1.0};  //1.18 0 0.45
+// const float angle_PID[3] = {1.4,0,1.6};  //1.18 0 0.45
+const float angle_PID[3] = {1.4,0,2.2};
 float angle_max_out = 100;
 float angle_max_iout = 30;
 
@@ -28,6 +29,7 @@ namespace road_ns
 	void road_image::road_init(void)
 	{
 		PID_Init(&angle_pid,PID_POSITION,angle_PID,angle_max_out,angle_max_iout);
+		Average_PWM_Init();
 	}
 
 	cv::Point road_image::FitPoint(cv::Mat Coe,int n,int x)
@@ -65,71 +67,44 @@ namespace road_ns
 		cv::solve(X, Y, Coe, cv::DECOMP_LU);
 	}
 
-	void road_image::Light_Calc(double leftk)
-	{
-		vx = 0.9;
-		if(leftk > -1.12 && leftk < 0)
-		{
-			std::cout << "________right________" << std::endl;
-		 	turn_pwm = TURN_PWM_RIGHT;
-		}
-		else if(leftk > 0.8)
-		{
-			std::cout << "________left________" << std::endl;
-			turn_pwm = TURN_PWM_LEFT;
-		}
-	}
-
-	void road_image::Default_Calc(double k)
-	{
-		
-		if(k < 4.5 && k > 0)
-		{
-			std::cout << "________left________" << std::endl;
-			turn_pwm = TURN_PWM_LEFT;
-			return;
-		}
-		else if(k > -4.0 && k < 0)
-		{
-			std::cout << "________right________" << std::endl;
-			turn_pwm = TURN_PWM_RIGHT;
-			return;
-		}
-		
-	}
-
-	int road_image::T_Turn(int row, int col, cv::Mat mask)
+	int road_image::T_Turn(int row, int col, cv::Mat& mask)
 	{
 		std::vector<cv::Point> left,right;
-		int Cmid = 150;
+		int Cmid = col/2;
 		int i,j1,j2;
 		for (i = row-1; i >= 0; i--) //从下到上
 		{	
 			for (j1 = Cmid; j1 > 0; j1--) //从中间向�??????????
 			{
-				if (mask.at<uchar>(i, j1) == 0 && mask.at<uchar>(i, j1 - 1) == 255)
+				if (mask.at<uchar>(i, j1 - 1) == 255)
 				{
-					left.push_back(cv::Point(i,j1 - 1));
+					//std::cout << "left:"<< cv::Point(i,j1 - 1) << std::endl;
+					left.push_back(cv::Point(j1 - 1,i));
+					//cv::circle(mask, left.back(), 1, cv::Scalar(125, 125, 125), -1);
 					break;
 				}
 			}
 			for (j2 = Cmid; j2 < col - 1; j2++) //从中间向�??????????
 			{
-				if (mask.at<uchar>(i, j2) == 0 && mask.at<uchar>(i, j2 + 1) == 255)
+				if (mask.at<uchar>(i, j2 + 1) == 255)
 				{
 					right.push_back(cv::Point(i,j2 + 1));
 					break;
 				}
 			}
 		}
-		if(right.size() < row - 30 && left.size() < row - 30)
+
+		std::cout << "right size:"<< right.size() << std::endl;
+		std::cout << "left size:"<< left.size() << std::endl;
+
+		if(right.size() < row - 10 && left.size() < row - 10)
 		{
 			std::cout <<"T left"<< std::endl;
 			return TURN_PWM_LEFT;			
 		}
 		else
 		{
-			return 0;
+			return 1;
 		}
 
 	}
@@ -249,6 +224,26 @@ namespace road_ns
 		cv::waitKey(1);
 	}
 	
+	void road_image::Average_PWM_Init(void)
+	{
+		for(uint8_t i=0; i<buff_len; i++)
+			buff[i] = 0;
+	}
+
+	float road_image::Average_PWM(float current_pwm)
+	{
+		static float limit = 20;
+		if(current_pwm > limit || current_pwm < -limit)
+			return current_pwm;
+		static uint8_t buff_ptr = 0;
+		buff[buff_ptr] = current_pwm;
+		if(++buff_ptr >= buff_len)
+			buff_ptr = 0;
+		float sum = 0;
+		for(uint8_t i=0; i<buff_len; i++)
+			sum += buff[i];
+		return (sum / buff_len);
+	}
 
 	void road_image::Calc_Speed(cv::Mat *frame,bool show_image)
 	{
@@ -273,19 +268,23 @@ namespace road_ns
 		int h = (*frame).rows;
 		int w = (*frame).cols;
 
-		if(road_state == Left_Turn)
-		{
-			if(turn_pwm = T_Turn(h, w, *frame))
-			{
-				return;
-			}
-		}
+		// if(road_state == Left_Turn)
+		// {
+		// 	if(!(turn_pwm = T_Turn(h, w, *frame)))
+		// 	{
+		// 		return;
+		// 	}
+		// }
 		
 		cv::HoughLinesP(*frame,lines,1,CV_PI/180,15,37,h); //15 45 60
 
 		double hough_end =ros::Time::now().toSec();
 		std::cout << "-----Hough Time :" << (hough_end - begin) * 1000 << "ms" << std::endl;
-		
+
+		cv::Mat three_mask;
+    	cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
+		Show_Image("mask", three_mask, show_image);
+			
 		if (lines.size())
 		{
 			if(road_state != Light)
@@ -299,6 +298,7 @@ namespace road_ns
 			{
 				turn_pwm = TURN_PWM_LEFT;
 				std::cout << "______________T TURN LEFT____________" << std::endl;
+				Show_Image("way", way, show_image);
 				return;
 			}
 			
@@ -340,6 +340,8 @@ namespace road_ns
 			//1顶部�?????????????????2底部
 		}
 
+		Show_Image("way", way, show_image);
+
 		double line_end =ros::Time::now().toSec();
 		std::cout << "-----line_handle Time :" << (line_end - begin) * 1000 << "ms" << std::endl;
 
@@ -374,10 +376,6 @@ namespace road_ns
 			{
 				turn_pwm = TURN_PWM_LEFT;
 				std::cout << "_______________left_____________" << std::endl;
-				cv::Mat three_mask;
-				cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
-				Show_Image("mask", three_mask, show_image);
-				Show_Image("way", way, show_image);
 				return;
 			}
 			else
@@ -392,10 +390,6 @@ namespace road_ns
 			{
 				turn_pwm = TURN_PWM_RIGHT;
 				std::cout << "______________right____________" << std::endl;
-				cv::Mat three_mask;
-				cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
-				Show_Image("mask", three_mask, show_image);
-				Show_Image("way", way, show_image);
 				return;
 			}
 			else
@@ -406,15 +400,13 @@ namespace road_ns
 
 		std::cout << "offset:" << offset<<std::endl;
 
-		uint16_t wz_pwm = PID_Calc(&angle_pid,offset,0);
+		PID_Calc(&angle_pid,offset,0);
+		if(road_state == SideWalk || road_state == Ramp)
+			angle_pid.out = Average_PWM(angle_pid.out);
 		ROS_INFO("%f %f",TURN_PWM_0-angle_pid.out,offset);	
 		turn_pwm = (TURN_PWM_0-angle_pid.out);
 
 		// cv::imshow("frame", *frame);
-		cv::Mat three_mask;
-    	cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
-		Show_Image("mask", three_mask, show_image);
-		Show_Image("way", way, show_image);
 
 		double end =ros::Time::now().toSec();
 		std::cout << "-----all Time :" << (end - begin) * 1000 << "ms" << std::endl;
