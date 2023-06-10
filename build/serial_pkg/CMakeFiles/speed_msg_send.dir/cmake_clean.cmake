@@ -1,7 +1,8 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/speed_msg_send.dir/src/speed_msg_send.cpp.o"
-  "/home/win/catkin_ws/devel/lib/serial_pkg/speed_msg_send.pdb"
   "/home/win/catkin_ws/devel/lib/serial_pkg/speed_msg_send"
+  "/home/win/catkin_ws/devel/lib/serial_pkg/speed_msg_send.pdb"
+  "CMakeFiles/speed_msg_send.dir/src/speed_msg_send.cpp.o"
+  "CMakeFiles/speed_msg_send.dir/src/speed_msg_send.cpp.o.d"
 )
 
 # Per-language clean rules from dependency scanning.

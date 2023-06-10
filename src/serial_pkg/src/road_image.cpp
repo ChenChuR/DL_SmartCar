@@ -118,7 +118,8 @@ namespace road_ns
 		//0 240 600 120
 		cv::resize(input_img, input_img, cv::Size(col, row),(0,0) ,(0,0),cv::INTER_AREA);
 		//600 360
-		cv::GaussianBlur(input_img, input_img, cv::Size(3, 3), 0);
+		cv::GaussianBlur(input_img, input_img, cv::Size(3, 3), 0, 0);
+		//cv::medianBlur(input_img, input_img, 3);
 		cv::cvtColor(input_img, input_img, CV_BGR2HSV);
 		cv::inRange(input_img, cv::Scalar(26, 43, 83), cv::Scalar(90, 255, 255), input_img);
 		input_img(rect).copyTo(input_img);
@@ -230,9 +231,8 @@ namespace road_ns
 			buff[i] = 0;
 	}
 
-	float road_image::Average_PWM(float current_pwm)
+	float road_image::Average_PWM(float current_pwm,float limit)
 	{
-		static float limit = 20;
 		if(current_pwm > limit || current_pwm < -limit)
 			return current_pwm;
 		static uint8_t buff_ptr = 0;
@@ -282,9 +282,10 @@ namespace road_ns
 		std::cout << "-----Hough Time :" << (hough_end - begin) * 1000 << "ms" << std::endl;
 
 		cv::Mat three_mask;
-    	cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
+		if(show_image)
+    		cv::cvtColor(*frame, three_mask, cv::COLOR_GRAY2BGR);
 		Show_Image("mask", three_mask, show_image);
-			
+	
 		if (lines.size())
 		{
 			if(road_state != Light)
@@ -402,7 +403,9 @@ namespace road_ns
 
 		PID_Calc(&angle_pid,offset,0);
 		if(road_state == SideWalk || road_state == Ramp)
-			angle_pid.out = Average_PWM(angle_pid.out);
+			angle_pid.out = Average_PWM(angle_pid.out,10);
+		else if(road_state == Ramp)
+			angle_pid.out = Average_PWM(angle_pid.out,50);
 		ROS_INFO("%f %f",TURN_PWM_0-angle_pid.out,offset);	
 		turn_pwm = (TURN_PWM_0-angle_pid.out);
 

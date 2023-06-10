@@ -1,7 +1,8 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/red.dir/src/red.cpp.o"
   "/home/win/catkin_ws/devel/lib/libred.pdb"
   "/home/win/catkin_ws/devel/lib/libred.so"
+  "CMakeFiles/red.dir/src/red.cpp.o"
+  "CMakeFiles/red.dir/src/red.cpp.o.d"
 )
 
 # Per-language clean rules from dependency scanning.

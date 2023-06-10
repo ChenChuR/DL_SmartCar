@@ -248,7 +248,7 @@ class YoLov5TRT(object):
             elif(temp == "left-turn"):
                 width = box[2] - box[0]
                 height = box[3] - box[1]
-                if( height > 65 and width > 0):    #95 20 42;  95 22 55  ; 95 45 65
+                if( height > 40 and width > 0):  #65  #95 20 42;  95 22 55  ; 95 45 65
                     print("width = %d, hwight = %d 000 \n", width, height)
                     print("result : left-turn")
                     #result.signage = 0b10010000
